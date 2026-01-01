@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 视口设置：适配所有移动设备，修复iPhone安全区问题 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>广韵课表·预约通道</title>
+    <!-- 引入 Telegram Web App 官方脚本 -->
+    <!-- 即使这个脚本加载失败，下面的按钮依然能用 -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --accent: #b71c1c; /* 深红 */
+            --blue: #1565c0;   /* 频道蓝 */
+            --gold: #9e7d36;   /* 金色 */
+            --dark: #000000;   /* 纯黑 */
+            --bg-card: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- 滚动修复核心代码 --- */
+        html {
+            width: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            /* 确保背景铺满且允许滚动 */
+            min-height: 100vh;
+            
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-image: url('bg.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #f5f5f5;
+            color: var(--dark);
+            
+            /* 开启 iOS 惯性滚动 */
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+
+            /* 底部留白：防止内容被底部按钮遮挡 */
+            padding-bottom: calc(140px + env(safe-area-inset-bottom));
+        }
+
+        .mobile-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 10px 12px;
+            position: relative;
+            z-index: 1; 
+        }
+
+        /* --- 卡片样式 --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 12px 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* 1. 标题 */
+        .header {
+            text-align: center;
+            padding: 12px 0 8px 0;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+            letter-spacing: 5px;
+            color: var(--dark);
+            font-weight: 900;
+        }
+        .header p {
+            font-size: 13px;
+            color: var(--gold);
+            letter-spacing: 4px;
+            margin: 4px 0 0;
+            font-weight: 800;
+        }
+
+        /* 2. 服务项目 */
+        .section-title {
+            font-size: 15px;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            text-align: center;
+        }
+        .service-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 2px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        /* 3. 价格展示 */
+        .price-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .price-card {
+            flex: 1;
+            background: linear-gradient(180deg, #fff 0%, #fffbf0 100%);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .price-val {
+            font-size: 32px;
+            color: var(--accent);
+            font-weight: 900;
+            font-family: Impact, sans-serif;
+            line-height: 1;
+        }
+        .price-label {
+            font-size: 12px;
+            color: #444;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        /* 4. 提示区域 */
+        .tips-box {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            line-height: 1.5;
+        }
+        .tip-item {
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #eee;
+        }
+        .tip-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .red-mark { color: var(--accent); }
+        .bg-gold-light {
+            background: rgba(179, 147, 77, 0.1);
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 4px;
+        }
+
+        /* 5. 奖励细则 */
+        .reward-box h3 {
+            font-size: 15px;
+            color: var(--accent);
+            margin: 0 0 8px 0;
+            font-weight: 900;
+        }
+        .reward-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 4px 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #444;
+        }
+        .reward-item { white-space: nowrap; }
+        .reward-note {
+            grid-column: span 2;
+            color: #888;
+            font-weight: normal;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        /* 6. 规则 */
+        .rules-box {
+            background: var(--accent);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .rules-title {
+            font-size: 15px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #ffeb3b;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 6px;
+        }
+        .rule-p { margin: 4px 0; font-weight: 700; }
+        .hl { color: #ffeb3b; font-weight: 900; }
+
+        /* --- 底部固定栏 --- */
+        .footer-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9999;
+            
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            
+            /* iPhone 底部安全区适配 */
+            padding: 12px 15px;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            max-width: 400px;
+            height: 46px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 900;
+            border-radius: 50px;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #42a5f5 0%, #1565c0 100%);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);
+        }
+        
+        .btn-red {
+            background: linear-gradient(135deg, #ef5350 0%, #c62828 100%);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3);
+            font-size: 17px;
+        }
+        
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    <div class="header">
+        <h1>广韵 · 课表</h1>
+        <p>私享 · 温馨 · 真实</p>
+    </div>
+
+    <div class="card">
+        <div class="section-title">🛁 服务项目：</div>
+        <div class="service-grid">
+            <div class="service-item">鸳鸯戏水</div>
+            <div class="service-item">极品灯推</div>
+            <div class="service-item">无帽深喉</div>
+            <div class="service-item">观音坐莲</div>
+            <div class="service-item">老汉推车</div>
+            <div class="service-item">激情AA 💵</div>
+        </div>
+    </div>
+
+    <div class="price-row">
+        <div class="price-card">
+            <div class="price-val">600p</div>
+            <div class="price-label">优惠价 (45分钟)</div>
+        </div>
+        <div class="price-card">
+            <div class="price-val">1200pp</div>
+            <div class="price-label">优惠价 (90分钟)</div>
+        </div>
+    </div>
+
+    <div class="card tips-box">
+        <div class="tip-item">
+            <span style="font-size:16px">🌙</span> 
+            <span class="red-mark">包夜资源珍贵，请联系客服询价</span>
+        </div>
+        <div class="tip-item bg-gold-light">
+            <b>管式服务：</b>需联系客服具体指点，加价 <b>200</b>。并不是每一位老师都会这种服务噢~
+        </div>
+    </div>
+
+    <div class="card reward-box">
+        <h3>🎁 推荐奖励及细则</h3>
+        <div class="reward-grid">
+            <div class="reward-item">• 好友下课，领 50元 现金券</div>
+            <div class="reward-item">• 仅限本人下次使用，不可叠加</div>
+            <div class="reward-item">• 消费 1P：每次限用 1张</div>
+            <div class="reward-item">• 消费 2P：每次限用 2张</div>
+            <div class="reward-note">(注：奖励仅限直接推荐人。)</div>
+        </div>
+    </div>
+
+    <div class="rules-box">
+        <div class="rules-title">🛡️ 本茶室规则 (核心保障)</div>
+        <div class="rule-p">1. 必须见到<span class="hl">老师本人</span>，您满意后直接给钱。</div>
+        <div class="rule-p">2. <span class="hl">不收定金！不收路费！不收先款！</span></div>
+        <div class="rule-p">3. 环境安全私密，若货不对板，直接走人，<span class="hl">分文不取</span>。</div>
+    </div>
+</div>
+
+<!-- 底部固定双按钮 -->
+<div class="footer-fixed">
+    <!-- 方案：使用真实链接作为 href 兜底，onclick 尝试进行优化跳转 -->
+    <!-- 这样如果 JS 失败，href 会保证跳转发生 -->
+    <a href="https://t.me/guangzhouxiuche02" onclick="return tryOpenTg(event, this.href)" class="btn btn-blue">
+        📢 点击进入频道
+    </a>
+    <a href="https://t.me/lululuoo345" onclick="return tryOpenTg(event, this.href)" class="btn btn-red">
+        ✅ 预约/选课-点击立即联系
+    </a>
+</div>
+
+<script>
+    // 尝试初始化
+    try {
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.expand();
+        }
+    } catch (e) {
+        console.log("Telegram WebApp not loaded");
+    }
+
+    function tryOpenTg(e, url) {
+        // 1. 检查 Telegram 环境是否就绪
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+            // 2. 尝试使用内部方法跳转
+            try {
+                window.Telegram.WebApp.openTelegramLink(url);
+                // 成功触发 API 后，阻止默认 href 跳转（防止跳出浏览器）
+                e.preventDefault(); 
+                return false;
+            } catch (err) {
+                // 如果 API 报错，则不阻止默认 href，让浏览器去处理
+                return true; 
+            }
+        }
+        // 3. 如果不在 Telegram 环境，直接返回 true，允许 href 正常跳转
+        return true; 
+    }
+</script>
+
+</body>
+</html>
