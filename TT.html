@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>系统安全检测</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:#f3f6fa; font-family:"Segoe UI","Microsoft YaHei",Arial,sans-serif; color:#202124;
+}
+.card{
+  width:min(430px,90vw); background:#fff; border-radius:18px; padding:34px 30px;
+  box-shadow:0 15px 45px rgba(0,0,0,.12); text-align:center;
+}
+.icon{font-size:54px;margin-bottom:12px}
+h1{font-size:23px;margin:0 0 10px}
+#status{font-size:15px;color:#666;margin-bottom:22px}
+.bar{height:10px;background:#e8edf3;border-radius:99px;overflow:hidden}
+.progress{height:100%;width:0;background:#1677ff;border-radius:99px;transition:width .25s}
+.percent{margin-top:12px;font-size:14px;color:#777}
+.result{display:none}
+.result .emoji{font-size:72px}
+.result h2{font-size:30px;margin:8px 0}
+.result p{color:#666}
+button{
+  border:0;background:#1677ff;color:#fff;padding:11px 24px;border-radius:9px;
+  cursor:pointer;font-size:15px;margin-top:12px
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="scan">
+    <div class="icon">🛡️</div>
+    <h1>系统安全检测中</h1>
+    <div id="status">正在初始化检测……</div>
+    <div class="bar"><div class="progress" id="progress"></div></div>
+    <div class="percent" id="percent">0%</div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="emoji">😂</div>
+    <h2>被骗啦！</h2>
+    <p>放心，什么都没扫描。</p>
+    <p>只是朋友给你开的一个小玩笑 😎</p>
+    <button onclick="location.reload()">再来一次</button>
+  </div>
+</div>
+
+<script>
+const texts=[
+  "正在连接安全检测服务……",
+  "正在检查系统文件……",
+  "正在分析设备状态……",
+  "正在进行最后检测……",
+  "检测即将完成……"
+];
+let p=0, i=0;
+const bar=document.getElementById("progress");
+const percent=document.getElementById("percent");
+const status=document.getElementById("status");
+const timer=setInterval(()=>{
+  p+=Math.floor(Math.random()*7)+3;
+  if(p>100)p=100;
+  bar.style.width=p+"%";
+  percent.textContent=p+"%";
+  if(p>i*20 && i<texts.length){status.textContent=texts[i++];}
+  if(p>=100){
+    clearInterval(timer);
+    setTimeout(()=>{
+      document.getElementById("scan").style.display="none";
+      document.getElementById("result").style.display="block";
+    },700);
+  }
+},260);
+</script>
+</body>
+</html>
